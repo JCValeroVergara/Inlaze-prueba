@@ -1,0 +1,5 @@
+
+export const PROJECTS_SERVICE = 'PROJECTS_SERVICE';
+export const TASKS_SERVICE = 'TASKS_SERVICE';
+
+export const NATS_SERVICE = 'NATS_SERVICE';
