@@ -1,10 +1,17 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateTaskDto, TaskPaginationDto, UpdateTaskDto } from './dto';
 import { PrismaClient } from '@prisma/client';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { NATS_SERVICE } from 'src/config';
 
 @Injectable()
 export class TasksService extends PrismaClient implements OnModuleInit {
+
+    constructor(
+        @Inject(NATS_SERVICE) private readonly client: ClientProxy
+    ) { 
+        super();
+    }
 
     private readonly logger = new Logger('TasksService');
 
@@ -12,7 +19,24 @@ export class TasksService extends PrismaClient implements OnModuleInit {
         await this.$connect();
         this.logger.log('Connected to the database');
     }
-    create(createTaskDto: CreateTaskDto) {
+
+    private async validateProject(projectId: string) {
+        const IsValidProject = await this.client
+            .send({ cmd: 'validate_project' }, { projectId })
+            .toPromise();
+        
+        if (!IsValidProject) {
+            throw new RpcException({
+                status: HttpStatus.NOT_FOUND,
+                message: `Project with id ${projectId} not found`
+            });
+        }
+    }
+
+
+    async create(createTaskDto: CreateTaskDto) {
+        await this.validateProject(createTaskDto.projectId);
+
         return this.task.create({
             data: createTaskDto
         });
@@ -22,7 +46,8 @@ export class TasksService extends PrismaClient implements OnModuleInit {
         
         const totalPages = await this.task.count({
             where: {
-                status: taskPaginationDto.status
+                status: taskPaginationDto.status,
+                projectId: taskPaginationDto.projectId
             }
         });
 
@@ -34,7 +59,8 @@ export class TasksService extends PrismaClient implements OnModuleInit {
                 skip: (currentPage - 1) * perPage,
                 take: perPage,
                 where: {
-                    status: taskPaginationDto.status
+                    status: taskPaginationDto.status,
+                    projectId: taskPaginationDto.projectId
                 }
             }),
             meta: {

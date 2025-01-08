@@ -10,7 +10,7 @@ import { envs } from 'src/config';
     imports: [
         ClientsModule.register([
             {
-                name: 'PROJECTS_SERVICE',
+                name: 'NATS_SERVICE',
                 transport: Transport.NATS,
                 options: {
                     servers: envs.natsServers,

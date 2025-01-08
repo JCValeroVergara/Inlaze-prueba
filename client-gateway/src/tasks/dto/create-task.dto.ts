@@ -1,5 +1,5 @@
 
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { TaskStatus, TaskStatusList } from '../enum/tasks.enum';
 
 export class CreateTaskDto {
@@ -9,6 +9,9 @@ export class CreateTaskDto {
 
     @IsString()
     description: string;
+
+    @IsUUID()
+    projectId: string;
 
     @IsEnum(TaskStatusList, {
         message: `Invalid status. Valids values are: ${Object.values(TaskStatusList).join(', ')}`,

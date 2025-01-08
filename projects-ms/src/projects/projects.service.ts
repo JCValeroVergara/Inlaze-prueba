@@ -1,11 +1,18 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { HttpStatus, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PrismaClient } from '@prisma/client';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { PaginationDto } from 'src/common';
+import { NATS_SERVICE } from 'src/config';
 
 @Injectable()
 export class ProjectsService extends PrismaClient implements OnModuleInit {
+
+    constructor(
+        @Inject(NATS_SERVICE) private readonly client: ClientProxy,
+    ) {
+        super();
+    }
 
     private readonly logger = new Logger('ProjectsService');
     
@@ -46,7 +53,7 @@ export class ProjectsService extends PrismaClient implements OnModuleInit {
     async findOne(id: string) {
         const project = await this.project.findFirst({
             where: { id, active: true },
-        })
+        });
 
         if (!project) {
             throw new RpcException({
