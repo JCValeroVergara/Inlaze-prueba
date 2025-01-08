@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, ParseUUIDPipe } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { PaginationDto } from 'src/common';
@@ -33,5 +33,11 @@ export class ProjectsController {
     @MessagePattern({ cmd: 'remove_project' })
     remove(@Payload('id') id: string) {
         return this.projectsService.remove(id);
+    }
+
+    @MessagePattern({ cmd: 'validate_project' })
+    async validateProject(@Payload('projectId', ParseUUIDPipe) projectId: string) {
+        const project = await this.projectsService.findOne(projectId);
+        return !!project;
     }
 }
